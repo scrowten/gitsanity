@@ -4,9 +4,10 @@ from datetime import UTC, datetime, timedelta
 import httpx
 from jose import jwt
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # used by get_or_create_user
 
 from app.config import settings
+from app.database import AsyncSessionLocal
 from app.models.recommendation import StarredRepo, UserPreference
 from app.models.user import User
 from app.services.github import GitHubClient
@@ -77,55 +78,60 @@ def decode_session_token(token: str) -> str | None:
         return None
 
 
-async def sync_starred_repos(
-    db: AsyncSession, user: User, access_token: str
-) -> None:
+async def sync_starred_repos(user_id: str, access_token: str) -> None:
+    from app.services.ingestion import ingest_repos_for_user
+
     gh = GitHubClient(access_token)
     starred = await gh.get_starred_repos(max_pages=5)  # up to 500 repos
 
-    # Store starred repos
-    for repo in starred:
-        existing = await db.execute(
-            select(StarredRepo).where(
-                StarredRepo.user_id == user.id,
-                StarredRepo.repo_github_id == repo.github_id,
-            )
-        )
-        if not existing.scalar_one_or_none():
-            db.add(
-                StarredRepo(
-                    user_id=user.id,
-                    repo_github_id=repo.github_id,
-                    repo_full_name=repo.full_name,
+    async with AsyncSessionLocal() as db:
+        # Store starred repos
+        for repo in starred:
+            existing = await db.execute(
+                select(StarredRepo).where(
+                    StarredRepo.user_id == uuid.UUID(user_id),
+                    StarredRepo.repo_github_id == repo.github_id,
                 )
             )
+            if not existing.scalar_one_or_none():
+                db.add(
+                    StarredRepo(
+                        user_id=uuid.UUID(user_id),
+                        repo_github_id=repo.github_id,
+                        repo_full_name=repo.full_name,
+                    )
+                )
 
-    await db.commit()
+        await db.commit()
 
-    # Build and store preference profile
-    profile = build_preference_profile(starred)
+        # Build and store preference profile
+        profile = build_preference_profile(starred)
 
-    # Clear old preferences
-    old_prefs = await db.execute(
-        select(UserPreference).where(UserPreference.user_id == user.id)
-    )
-    for pref in old_prefs.scalars():
-        await db.delete(pref)
+        # Clear old preferences
+        old_prefs = await db.execute(
+            select(UserPreference).where(UserPreference.user_id == uuid.UUID(user_id))
+        )
+        for pref in old_prefs.scalars():
+            await db.delete(pref)
 
-    # Insert updated preferences
-    for lang, weight in profile.languages.items():
-        db.add(UserPreference(
-            user_id=user.id,
-            preference_type="language",
-            preference_value=lang,
-            weight=weight,
-        ))
-    for topic, weight in profile.topics.items():
-        db.add(UserPreference(
-            user_id=user.id,
-            preference_type="topic",
-            preference_value=topic,
-            weight=weight,
-        ))
+        # Insert updated preferences
+        for lang, weight in profile.languages.items():
+            db.add(UserPreference(
+                user_id=uuid.UUID(user_id),
+                preference_type="language",
+                preference_value=lang,
+                weight=weight,
+            ))
+        for topic, weight in profile.topics.items():
+            db.add(UserPreference(
+                user_id=uuid.UUID(user_id),
+                preference_type="topic",
+                preference_value=topic,
+                weight=weight,
+            ))
 
-    await db.commit()
+        await db.commit()
+
+    # Ingest repos into catalog based on the updated preference profile
+    async with AsyncSessionLocal() as db:
+        await ingest_repos_for_user(db, profile, access_token)

@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     # App
     app_name: str = "GitSanity"
     debug: bool = False
+    frontend_url: str = "http://localhost:3000"
+    cors_origins: list[str] = ["http://localhost:3000"]
 
 
 settings = Settings()

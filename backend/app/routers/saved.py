@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.models.recommendation import Recommendation
 from app.models.repository import Repository
-from app.routers.feed import get_current_user
 from app.models.user import User
 from app.schemas.recommendation import RepoCard
 

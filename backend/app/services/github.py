@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -77,7 +78,11 @@ class GitHubClient:
         if language:
             query += f" language:{language}"
         if time_range == "daily":
-            query += " created:>2024-01-01"
+            since = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
+            query += f" created:>{since}"
+        elif time_range == "weekly":
+            since = (datetime.now(UTC) - timedelta(days=7)).strftime("%Y-%m-%d")
+            query += f" created:>{since}"
         return await self.search_repos(query, sort="stars", per_page=30)
 
 
