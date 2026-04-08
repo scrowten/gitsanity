@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.limiter import limiter
+from app.security import decrypt_token
 from app.models.recommendation import Recommendation, UserPreference
 from app.models.repository import Repository
 from app.models.user import User
@@ -16,9 +21,11 @@ router = APIRouter(prefix="/feed", tags=["feed"])
 
 
 @router.get("", response_model=FeedResponse)
+@limiter.limit("30/minute")
 async def get_feed(
-    page: int = 1,
-    limit: int = 20,
+    request: Request,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> FeedResponse:
@@ -41,7 +48,8 @@ async def get_feed(
 
     # If catalog is empty, fetch from GitHub trending directly
     if not candidate_repos:
-        gh = GitHubClient(current_user.github_access_token)
+        access_token = decrypt_token(current_user.github_access_token, settings.secret_key)
+        gh = GitHubClient(access_token)
         top_lang = _top_language(profile)
         gh_repos = await gh.get_trending_repos(language=top_lang)
         scored = score_repos(gh_repos, profile)
@@ -74,14 +82,14 @@ async def get_feed(
 
 
 @router.post("/{github_id}/action")
+@limiter.limit("60/minute")
 async def repo_action(
+    request: Request,
     github_id: int,
-    action: str,
+    action: Literal["saved", "dismissed", "clicked"],
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    if action not in ("saved", "dismissed", "clicked"):
-        raise HTTPException(status_code=400, detail="Invalid action")
 
     result = await db.execute(
         select(Repository).where(Repository.github_id == github_id)

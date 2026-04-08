@@ -10,6 +10,7 @@ from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models.recommendation import StarredRepo, UserPreference
 from app.models.user import User
+from app.security import decrypt_token, encrypt_token
 from app.services.github import GitHubClient
 from app.services.preference import build_preference_profile
 
@@ -38,8 +39,10 @@ async def get_or_create_user(db: AsyncSession, access_token: str) -> User:
     )
     user = result.scalar_one_or_none()
 
+    encrypted = encrypt_token(access_token, settings.secret_key)
+
     if user:
-        user.github_access_token = access_token
+        user.github_access_token = encrypted
         user.last_login_at = datetime.now(UTC)
         user.display_name = gh_user.get("name") or gh_user["login"]
         user.avatar_url = gh_user.get("avatar_url")
@@ -50,7 +53,7 @@ async def get_or_create_user(db: AsyncSession, access_token: str) -> User:
             display_name=gh_user.get("name") or gh_user["login"],
             avatar_url=gh_user.get("avatar_url"),
             email=gh_user.get("email"),
-            github_access_token=access_token,
+            github_access_token=encrypted,
         )
         db.add(user)
 

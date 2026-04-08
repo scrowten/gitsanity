@@ -1,21 +1,22 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.limiter import limiter
 from app.models.user import User
 from app.services import auth as auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
-GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 
 
 @router.get("/login")
-async def login() -> RedirectResponse:
+@limiter.limit("10/minute")
+async def login(request: Request) -> RedirectResponse:
     params = (
         f"client_id={settings.github_client_id}"
         f"&redirect_uri={settings.github_redirect_uri}"
@@ -25,12 +26,17 @@ async def login() -> RedirectResponse:
 
 
 @router.get("/callback")
+@limiter.limit("10/minute")
 async def callback(
+    request: Request,
     code: str,
     response: Response,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ) -> RedirectResponse:
+    if len(code) > 256:
+        raise HTTPException(status_code=400, detail="Invalid code")
+
     access_token = await auth_service.exchange_code_for_token(code)
     if not access_token:
         raise HTTPException(status_code=400, detail="GitHub OAuth failed")
@@ -45,7 +51,7 @@ async def callback(
         key="session",
         value=session_token,
         httponly=True,
-        secure=False,  # set True in production
+        secure=settings.production,
         samesite="lax",
         max_age=settings.access_token_expire_minutes * 60,
     )
