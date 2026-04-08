@@ -1,17 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, Loader2 } from 'lucide-react'
 import { NavBar } from '@/components/NavBar'
 import { RepoCard } from '@/components/RepoCard'
 import { getFeed, repoAction } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 import type { RepoCard as RepoCardType } from '@/types'
 
 export default function FeedPage() {
+  const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [page, setPage] = useState(1)
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/')
+    }
+  }, [authLoading, isAuthenticated, router])
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['feed', page],
@@ -31,6 +41,16 @@ export default function FeedPage() {
   })
 
   const visibleItems = data?.items.filter((r: RepoCardType) => !dismissed.has(r.github_id)) ?? []
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) return null
 
   return (
     <>

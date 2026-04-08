@@ -1,18 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Telescope, Bookmark, LogOut } from 'lucide-react'
+import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
+import { Telescope, Bookmark, LogOut, LogIn } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logout, getLoginUrl } from '@/lib/api'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function NavBar() {
   const pathname = usePathname()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { user, isAuthenticated } = useAuth()
 
   const handleLogout = async () => {
     await logout()
+    queryClient.clear()
     router.push('/')
   }
 
@@ -25,38 +30,66 @@ export function NavBar() {
           <span>GitSanity</span>
         </Link>
 
-        {/* Nav links */}
         <div className="flex items-center gap-1">
-          <Link
-            href="/feed"
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              pathname === '/feed'
-                ? 'bg-indigo-50 text-indigo-700'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            )}
-          >
-            Feed
-          </Link>
-          <Link
-            href="/saved"
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              pathname === '/saved'
-                ? 'bg-indigo-50 text-indigo-700'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            )}
-          >
-            <Bookmark className="w-4 h-4" />
-            Saved
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
+          {isAuthenticated && (
+            <>
+              <Link
+                href="/feed"
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  pathname === '/feed'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                )}
+              >
+                Feed
+              </Link>
+              <Link
+                href="/saved"
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  pathname === '/saved'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                )}
+              >
+                <Bookmark className="w-4 h-4" />
+                Saved
+              </Link>
+            </>
+          )}
+
+          {isAuthenticated && user ? (
+            <div className="flex items-center gap-2 ml-2">
+              {user.avatar_url && (
+                <Image
+                  src={user.avatar_url}
+                  alt={user.display_name ?? user.github_username}
+                  width={28}
+                  height={28}
+                  className="rounded-full"
+                />
+              )}
+              <span className="text-sm text-gray-700 hidden sm:block">
+                {user.display_name ?? user.github_username}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:block">Sign out</span>
+              </button>
+            </div>
+          ) : (
+            <a
+              href={getLoginUrl()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign in
+            </a>
+          )}
         </div>
       </div>
     </nav>

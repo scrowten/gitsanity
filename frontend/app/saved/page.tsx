@@ -1,16 +1,39 @@
 'use client'
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { Bookmark, Loader2 } from 'lucide-react'
 import { NavBar } from '@/components/NavBar'
 import { RepoCard } from '@/components/RepoCard'
 import { getSaved } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
 
 export default function SavedPage() {
+  const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/')
+    }
+  }, [authLoading, isAuthenticated, router])
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['saved'],
     queryFn: getSaved,
+    enabled: isAuthenticated,
   })
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) return null
 
   return (
     <>
