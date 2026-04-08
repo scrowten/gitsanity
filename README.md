@@ -7,9 +7,10 @@ It learns from your GitHub stars and surfaces repositories you would never find 
 ## Tech Stack
 
 - **Backend**: Python + FastAPI + SQLAlchemy 2.0
-- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
-- **Database**: PostgreSQL (Supabase)
+- **Frontend**: Next.js 16 + TypeScript + Tailwind CSS v4
+- **Database**: PostgreSQL
 - **Auth**: GitHub OAuth
+- **Deploy**: Railway (backend) + Vercel (frontend)
 
 ## Project Structure
 
@@ -22,41 +23,39 @@ gitsanity/
 
 ## Getting Started
 
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL (or Supabase account)
-- GitHub OAuth App
-
-### Backend
+### Option A — Docker Compose (recommended)
 
 ```bash
-cd backend
+# 1. Copy and fill environment variables
+cp .env.example .env
 
-# Install dependencies
+# 2. Start everything (PostgreSQL + backend + frontend)
+docker compose up --build
+```
+
+Services:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+
+### Option B — Manual setup
+
+**Prerequisites**: Python 3.11+, Node.js 20+, PostgreSQL, GitHub OAuth App
+
+```bash
+# Backend
+cd backend
 pip install uv
 uv sync
-
-# Copy and fill environment variables
-cp ../.env.example ../.env
-
-# Run database migrations
+cp ../.env.example ../.env   # fill in values
 alembic upgrade head
-
-# Start development server
 uvicorn app.main:app --reload
 ```
 
-### Frontend
-
 ```bash
+# Frontend (separate terminal)
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
@@ -90,6 +89,20 @@ pytest --cov=app tests/
 cd frontend
 npm test
 ```
+
+## Deployment
+
+### Backend → Railway
+
+1. Connect the repo to a Railway project
+2. Railway reads `railway.toml` at the root and builds `backend/Dockerfile`
+3. Add environment variables in the Railway dashboard (see `.env.example`)
+4. Add a PostgreSQL plugin — Railway injects `DATABASE_URL` automatically
+
+### Frontend → Vercel
+
+1. Import the repo in Vercel; set **Root Directory** to `frontend`
+2. Add `NEXT_PUBLIC_API_URL` pointing to your Railway backend URL
 
 ## Docs
 
