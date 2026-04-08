@@ -69,26 +69,28 @@ def test_score_repos_filters_already_seen():
 
 
 def test_score_repos_diversification():
+    from collections import Counter
+
     profile = _make_profile(languages={"python": 1.0})
-    # 5 repos from same owner
-    repos = [_make_repo(i, language="Python") for i in range(1, 6)]
-    for repo in repos:
-        repo = GitHubRepo(
-            github_id=repo.github_id,
-            full_name=f"same-owner/repo-{repo.github_id}",
-            description=repo.description,
-            primary_language=repo.primary_language,
-            topics=repo.topics,
-            star_count=repo.star_count,
-            fork_count=repo.fork_count,
-            html_url=repo.html_url,
-            homepage=repo.homepage,
-            created_at=repo.created_at,
-            updated_at=repo.updated_at,
+    # 5 repos from the same owner — diversification should cap at 3 per owner
+    repos = [
+        GitHubRepo(
+            github_id=i,
+            full_name=f"same-owner/repo-{i}",
+            description=f"repo {i}",
+            primary_language="Python",
+            topics=[],
+            star_count=500,
+            fork_count=50,
+            html_url=f"https://github.com/same-owner/repo-{i}",
+            homepage=None,
+            created_at=None,
+            updated_at="2025-01-01T00:00:00Z",
         )
+        for i in range(1, 6)
+    ]
     result = score_repos(repos, profile)
     owners = [r.repo.full_name.split("/")[0] for r in result]
-    from collections import Counter
     assert max(Counter(owners).values()) <= 3
 
 
