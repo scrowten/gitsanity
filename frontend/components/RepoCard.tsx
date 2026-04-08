@@ -8,10 +8,11 @@ interface RepoCardProps {
   repo: RepoCardType
   onSave?: (id: number) => void
   onDismiss?: (id: number) => void
+  onUnsave?: (id: number) => void
   saved?: boolean
 }
 
-export function RepoCard({ repo, onSave, onDismiss, saved = false }: RepoCardProps) {
+export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: RepoCardProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
       {/* Header */}
@@ -80,10 +81,20 @@ export function RepoCard({ repo, onSave, onDismiss, saved = false }: RepoCardPro
       )}
 
       {saved && (
-        <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
-          <Bookmark className="w-3.5 h-3.5 fill-green-600 text-green-600" />
-          Saved
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
+            <Bookmark className="w-3.5 h-3.5 fill-green-600 text-green-600" />
+            Saved
+          </span>
+          {onUnsave && (
+            <button
+              onClick={() => onUnsave(repo.github_id)}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

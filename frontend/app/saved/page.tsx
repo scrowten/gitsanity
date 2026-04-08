@@ -2,16 +2,21 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bookmark, Loader2 } from 'lucide-react'
 import { NavBar } from '@/components/NavBar'
 import { RepoCard } from '@/components/RepoCard'
-import { getSaved } from '@/lib/api'
+import { RepoCardSkeleton } from '@/components/RepoCardSkeleton'
+import { Toaster } from '@/components/Toast'
+import { getSaved, repoAction } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { useToast } from '@/lib/useToast'
 
 export default function SavedPage() {
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const queryClient = useQueryClient()
+  const { toasts, show: showToast, close: closeToast } = useToast()
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -23,6 +28,14 @@ export default function SavedPage() {
     queryKey: ['saved'],
     queryFn: getSaved,
     enabled: isAuthenticated,
+  })
+
+  const unsaveMutation = useMutation({
+    mutationFn: (id: number) => repoAction(id, 'dismissed'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved'] })
+      showToast('Removed from saved', 'info')
+    },
   })
 
   if (authLoading) {
@@ -42,14 +55,18 @@ export default function SavedPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Saved Repos</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {data ? `${data.length} repo${data.length !== 1 ? 's' : ''} saved` : 'Your bookmarked repositories'}
+            {data
+              ? `${data.length} repo${data.length !== 1 ? 's' : ''} saved`
+              : 'Your bookmarked repositories'}
           </p>
         </div>
 
+        {/* Skeleton loading */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <p className="text-sm">Loading saved repos...</p>
+          <div className="grid grid-cols-1 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <RepoCardSkeleton key={i} />
+            ))}
           </div>
         )}
 
@@ -69,12 +86,21 @@ export default function SavedPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4">
-          {data?.map((repo) => (
-            <RepoCard key={repo.github_id} repo={repo} saved />
-          ))}
-        </div>
+        {!isLoading && (
+          <div className="grid grid-cols-1 gap-4">
+            {data?.map((repo) => (
+              <RepoCard
+                key={repo.github_id}
+                repo={repo}
+                saved
+                onUnsave={(id) => unsaveMutation.mutate(id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      <Toaster toasts={toasts} onClose={closeToast} />
     </>
   )
 }

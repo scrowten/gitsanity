@@ -6,8 +6,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, Loader2 } from 'lucide-react'
 import { NavBar } from '@/components/NavBar'
 import { RepoCard } from '@/components/RepoCard'
+import { RepoCardSkeleton } from '@/components/RepoCardSkeleton'
+import { Toaster } from '@/components/Toast'
 import { getFeed, repoAction } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
+import { useToast } from '@/lib/useToast'
 import type { RepoCard as RepoCardType } from '@/types'
 
 export default function FeedPage() {
@@ -16,6 +19,7 @@ export default function FeedPage() {
   const [page, setPage] = useState(1)
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
   const queryClient = useQueryClient()
+  const { toasts, show: showToast, close: closeToast } = useToast()
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -26,6 +30,7 @@ export default function FeedPage() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['feed', page],
     queryFn: () => getFeed(page),
+    enabled: isAuthenticated,
   })
 
   const actionMutation = useMutation({
@@ -34,8 +39,10 @@ export default function FeedPage() {
     onSuccess: (_, { id, action }) => {
       if (action === 'dismissed') {
         setDismissed((prev) => new Set(prev).add(id))
+        showToast('Dismissed', 'info')
       } else {
         queryClient.invalidateQueries({ queryKey: ['saved'] })
+        showToast('Saved to bookmarks')
       }
     },
   })
@@ -60,34 +67,30 @@ export default function FeedPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Your Feed</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Repos matched to your interests
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Repos matched to your interests</p>
           </div>
           <button
             onClick={() => { setPage(1); refetch() }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
 
-        {/* States */}
+        {/* Skeleton loading */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <p className="text-sm">Loading your personalized feed...</p>
+          <div className="grid grid-cols-1 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <RepoCardSkeleton key={i} />
+            ))}
           </div>
         )}
 
         {isError && (
           <div className="text-center py-20">
             <p className="text-gray-500 mb-3">Could not load your feed.</p>
-            <button
-              onClick={() => refetch()}
-              className="text-sm text-indigo-600 hover:underline"
-            >
+            <button onClick={() => refetch()} className="text-sm text-indigo-600 hover:underline">
               Try again
             </button>
           </div>
@@ -103,16 +106,18 @@ export default function FeedPage() {
         )}
 
         {/* Repo cards */}
-        <div className="grid grid-cols-1 gap-4">
-          {visibleItems.map((repo: RepoCardType) => (
-            <RepoCard
-              key={repo.github_id}
-              repo={repo}
-              onSave={(id) => actionMutation.mutate({ id, action: 'saved' })}
-              onDismiss={(id) => actionMutation.mutate({ id, action: 'dismissed' })}
-            />
-          ))}
-        </div>
+        {!isLoading && (
+          <div className="grid grid-cols-1 gap-4">
+            {visibleItems.map((repo: RepoCardType) => (
+              <RepoCard
+                key={repo.github_id}
+                repo={repo}
+                onSave={(id) => actionMutation.mutate({ id, action: 'saved' })}
+                onDismiss={(id) => actionMutation.mutate({ id, action: 'dismissed' })}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         {data && data.has_more && (
@@ -126,6 +131,8 @@ export default function FeedPage() {
           </div>
         )}
       </div>
+
+      <Toaster toasts={toasts} onClose={closeToast} />
     </>
   )
 }

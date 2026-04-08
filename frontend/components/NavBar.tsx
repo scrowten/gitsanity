@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Telescope, Bookmark, LogOut, LogIn } from 'lucide-react'
+import { Telescope, Bookmark, LogOut, LogIn, Rss } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logout, getLoginUrl } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -30,37 +30,38 @@ export function NavBar() {
           <span>GitSanity</span>
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {isAuthenticated && (
             <>
               <Link
                 href="/feed"
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   pathname === '/feed'
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
-                Feed
+                <Rss className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Feed</span>
               </Link>
               <Link
                 href="/saved"
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   pathname === '/saved'
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 )}
               >
-                <Bookmark className="w-4 h-4" />
-                Saved
+                <Bookmark className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Saved</span>
               </Link>
             </>
           )}
 
           {isAuthenticated && user ? (
-            <div className="flex items-center gap-2 ml-2">
+            <div className="flex items-center gap-1.5 ml-1 sm:ml-2">
               {user.avatar_url && (
                 <Image
                   src={user.avatar_url}
