@@ -7,6 +7,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# M-7: Accept API URL as build arg so it can be overridden per deployment
+# (NEXT_PUBLIC_* vars are inlined at compile time, not readable at runtime)
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG DOCKER_BUILD=false
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV DOCKER_BUILD=$DOCKER_BUILD
 RUN npm run build
 
 FROM node:20-alpine AS runner

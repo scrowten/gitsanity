@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,16 +15,31 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 
+# Short TTL for the OAuth state cookie — must outlive the GitHub redirect round-trip
+_STATE_COOKIE_MAX_AGE = 600  # 10 minutes
+
 
 @router.get("/login")
 @limiter.limit("10/minute")
 async def login(request: Request) -> RedirectResponse:
+    # C-2: Generate unpredictable state to prevent session fixation / CSRF on OAuth flow
+    state = secrets.token_urlsafe(32)
     params = (
         f"client_id={settings.github_client_id}"
         f"&redirect_uri={settings.github_redirect_uri}"
         f"&scope=read:user+user:email"
+        f"&state={state}"
     )
-    return RedirectResponse(f"{GITHUB_AUTH_URL}?{params}")
+    response = RedirectResponse(f"{GITHUB_AUTH_URL}?{params}")
+    response.set_cookie(
+        key="oauth_state",
+        value=state,
+        httponly=True,
+        secure=settings.production,
+        samesite="lax",  # Must be lax — GitHub redirect is cross-site GET
+        max_age=_STATE_COOKIE_MAX_AGE,
+    )
+    return response
 
 
 @router.get("/callback")
@@ -30,10 +47,15 @@ async def login(request: Request) -> RedirectResponse:
 async def callback(
     request: Request,
     code: str,
-    response: Response,
+    state: str,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ) -> RedirectResponse:
+    # C-2: Validate OAuth state to prevent session fixation
+    stored_state = request.cookies.get("oauth_state")
+    if not stored_state or not secrets.compare_digest(stored_state, state):
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+
     if len(code) > 256:
         raise HTTPException(status_code=400, detail="Invalid code")
 
@@ -47,12 +69,13 @@ async def callback(
     background_tasks.add_task(auth_service.sync_starred_repos, str(user.id), access_token)
 
     redirect = RedirectResponse(url=f"{settings.frontend_url}/feed")
+    redirect.delete_cookie("oauth_state")  # Clear state cookie after successful auth
     redirect.set_cookie(
         key="session",
         value=session_token,
         httponly=True,
         secure=settings.production,
-        samesite="lax",
+        samesite="strict",  # C-1: strict prevents CSRF on logout and action endpoints
         max_age=settings.access_token_expire_minutes * 60,
     )
     return redirect

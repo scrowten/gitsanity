@@ -31,7 +31,7 @@ class GitHubClient:
         }
 
     async def get_user(self) -> dict:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 f"{self.BASE_URL}/user", headers=self._headers
             )
@@ -40,7 +40,7 @@ class GitHubClient:
 
     async def get_starred_repos(self, max_pages: int = 10) -> list[GitHubRepo]:
         repos: list[GitHubRepo] = []
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             for page in range(1, max_pages + 1):
                 resp = await client.get(
                     f"{self.BASE_URL}/user/starred",
@@ -61,7 +61,7 @@ class GitHubClient:
         sort: str = "stars",
         per_page: int = 30,
     ) -> list[GitHubRepo]:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 f"{self.BASE_URL}/search/repositories",
                 headers=self._headers,

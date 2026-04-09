@@ -36,6 +36,7 @@ export default function SavedPage() {
       queryClient.invalidateQueries({ queryKey: ['saved'] })
       showToast('Removed from saved', 'info')
     },
+    onError: () => showToast('Something went wrong — please try again', 'info'),
   })
 
   if (authLoading) {

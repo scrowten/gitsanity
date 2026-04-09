@@ -45,6 +45,7 @@ export default function FeedPage() {
         showToast('Saved to bookmarks')
       }
     },
+    onError: () => showToast('Something went wrong — please try again', 'info'),
   })
 
   const visibleItems = data?.items.filter((r: RepoCardType) => !dismissed.has(r.github_id)) ?? []

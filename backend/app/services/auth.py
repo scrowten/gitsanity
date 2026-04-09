@@ -1,13 +1,16 @@
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
 import httpx
-from jose import jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession  # used by get_or_create_user
 
 from app.config import settings
 from app.database import AsyncSessionLocal
+
+logger = logging.getLogger(__name__)
 from app.models.recommendation import StarredRepo, UserPreference
 from app.models.user import User
 from app.security import decrypt_token, encrypt_token
@@ -16,7 +19,8 @@ from app.services.preference import build_preference_profile
 
 
 async def exchange_code_for_token(code: str) -> str | None:
-    async with httpx.AsyncClient() as client:
+    # H-2: timeout prevents a GitHub hang from blocking a request indefinitely
+    async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.post(
             "https://github.com/login/oauth/access_token",
             data={
@@ -74,10 +78,16 @@ def create_session_token(user_id: str) -> str:
 
 
 def decode_session_token(token: str) -> str | None:
+    # H-1: Catch specific exceptions so silent swallowing doesn't hide tampering
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         return payload.get("sub")
-    except Exception:
+    except ExpiredSignatureError:
+        # Normal expiry — not logged (too noisy)
+        return None
+    except JWTError:
+        # Malformed or tampered token — log for security monitoring
+        logger.warning("JWT decode failed — possible token tampering")
         return None
 
 

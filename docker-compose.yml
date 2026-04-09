@@ -4,7 +4,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: gitsanity
-      POSTGRES_PASSWORD: gitsanity
+      # H-7: password sourced from .env, not hardcoded — see .env.example
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: gitsanity
     ports:
       - "5432:5432"
@@ -24,24 +25,24 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://gitsanity:gitsanity@db:5432/gitsanity
+      DATABASE_URL: postgresql+asyncpg://gitsanity:${POSTGRES_PASSWORD}@db:5432/gitsanity
     depends_on:
       db:
         condition: service_healthy
     command: >
       sh -c "uv run alembic upgrade head &&
-             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
 
   frontend:
     build:
       context: ./frontend
       args:
         DOCKER_BUILD: "true"
+        # M-7: NEXT_PUBLIC_* vars are baked at build time — pass as ARG, not runtime env
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
     depends_on:
       - backend
 
