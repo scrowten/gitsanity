@@ -92,6 +92,14 @@ def decode_session_token(token: str) -> str | None:
 
 
 async def sync_starred_repos(user_id: str, access_token: str) -> None:
+    # M-5: wrap entire function so failures are visible rather than silently dropped
+    try:
+        await _sync_starred_repos(user_id, access_token)
+    except Exception:
+        logger.exception("sync_starred_repos failed for user %s", user_id)
+
+
+async def _sync_starred_repos(user_id: str, access_token: str) -> None:
     from app.services.ingestion import ingest_repos_for_user
 
     gh = GitHubClient(access_token)

@@ -18,7 +18,12 @@ async def get_current_user(
     user_id = decode_session_token(session)
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid session")
-    result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        # L-2: malformed sub claim in JWT (corrupted or old token) → clean 401, not 500
+        raise HTTPException(status_code=401, detail="Invalid session")
+    result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")

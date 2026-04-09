@@ -4,6 +4,19 @@ import { Star, GitFork, ExternalLink, Bookmark, X } from 'lucide-react'
 import type { RepoCard as RepoCardType } from '@/types'
 import { cn, formatStars, languageColor } from '@/lib/utils'
 
+// M-2: Guard against javascript: URIs — only allow GitHub https links
+function safeGitHubUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:' && parsed.hostname === 'github.com') {
+      return url
+    }
+  } catch {
+    // invalid URL
+  }
+  return null
+}
+
 interface RepoCardProps {
   repo: RepoCardType
   onSave?: (id: number) => void
@@ -13,19 +26,25 @@ interface RepoCardProps {
 }
 
 export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: RepoCardProps) {
+  const safeUrl = safeGitHubUrl(repo.html_url)
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
-        <a
-          href={repo.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex items-center gap-1.5 font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-        >
-          <span className="truncate">{repo.full_name}</span>
-          <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </a>
+        {safeUrl ? (
+          <a
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-1.5 font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            <span className="truncate">{repo.full_name}</span>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </a>
+        ) : (
+          <span className="font-semibold text-gray-900 truncate">{repo.full_name}</span>
+        )}
 
         {/* Stars */}
         <div className="flex items-center gap-1 text-sm text-gray-500 shrink-0">

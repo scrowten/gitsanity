@@ -17,6 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
+  # L-5: Separate migration service so a failed migration doesn't trigger an
+  # endless restart loop in the backend container.
+  migrate:
+    build: ./backend
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://gitsanity:${POSTGRES_PASSWORD}@db:5432/gitsanity
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uv run alembic upgrade head
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -27,11 +41,9 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://gitsanity:${POSTGRES_PASSWORD}@db:5432/gitsanity
     depends_on:
-      db:
-        condition: service_healthy
-    command: >
-      sh -c "uv run alembic upgrade head &&
-             uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+      migrate:
+        condition: service_completed_successfully
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers
 
   frontend:
     build:

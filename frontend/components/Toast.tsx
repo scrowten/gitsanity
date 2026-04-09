@@ -4,14 +4,14 @@ import { useEffect } from 'react'
 import { CheckCircle, X, Info } from 'lucide-react'
 
 export interface ToastItem {
-  id: number
+  id: string  // M-1: string to match crypto.randomUUID() output
   message: string
   type?: 'success' | 'info'
 }
 
 interface ToastProps {
   toast: ToastItem
-  onClose: (id: number) => void
+  onClose: (id: string) => void
 }
 
 function Toast({ toast, onClose }: ToastProps) {
@@ -40,7 +40,7 @@ function Toast({ toast, onClose }: ToastProps) {
 
 interface ToasterProps {
   toasts: ToastItem[]
-  onClose: (id: number) => void
+  onClose: (id: string) => void
 }
 
 export function Toaster({ toasts, onClose }: ToasterProps) {

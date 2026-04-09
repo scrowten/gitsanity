@@ -40,21 +40,30 @@ def build_preference_profile(starred_repos: list[GitHubRepo]) -> UserPreferenceP
 
 
 def _normalize(counter: Counter, total: int) -> dict[str, float]:
+    """Return weights as a fraction of total repos analyzed.
+
+    M-6 fix: previously divided by max_count, which always gave the most
+    common item a weight of 1.0 regardless of how dominant it was. A user
+    with 5 Python repos (out of 5 total) and one with 5 Python repos (out
+    of 200 total) got the same weight. Dividing by total reflects actual
+    depth of interest: 5/5=1.0 vs 5/200=0.025.
+    """
     if not counter:
         return {}
-    max_count = counter.most_common(1)[0][1]
     return {
-        key: round(count / max_count, 4)
+        key: round(count / total, 4)
         for key, count in counter.most_common(50)
     }
 
 
+# L-3: Only include words that are NOT already filtered by `len(w) > 3`.
+# Words ≤ 3 chars (a, an, the, and, or, in, on, at, to, of, is, it, are,
+# was, be, by, as, you, we, our, has, can, not, but, any, all, new, use,
+# via, its) are redundant here — keep only 4+ char meaningful stop words.
 _STOP_WORDS = {
-    "a", "an", "the", "and", "or", "for", "in", "on", "at", "to", "of",
-    "with", "is", "it", "this", "that", "are", "was", "be", "by", "from",
-    "as", "your", "you", "we", "our", "has", "have", "can", "will", "not",
-    "but", "also", "any", "all", "more", "new", "fast", "simple", "easy",
-    "based", "using", "use", "used", "via", "like", "just", "its", "into",
+    "with", "this", "that", "from", "your", "have", "will",
+    "also", "more", "fast", "simple", "easy", "based", "using",
+    "used", "like", "just", "into",
 }
 
 

@@ -16,8 +16,7 @@ dependencies = [
     "cryptography>=44.0.0",
     "slowapi>=0.1.9",
     "python-multipart>=0.0.19",
-    "authlib>=1.4.0",
-    "itsdangerous>=2.2.0",
+    # L-1: authlib and itsdangerous removed — never imported, added attack surface
 ]
 
 [project.optional-dependencies]
