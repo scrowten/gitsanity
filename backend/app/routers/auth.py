@@ -70,12 +70,17 @@ async def callback(
 
     redirect = RedirectResponse(url=f"{settings.frontend_url}/feed")
     redirect.delete_cookie("oauth_state")  # Clear state cookie after successful auth
+    # In production the frontend (Vercel) and backend (Railway) are on different domains.
+    # samesite=none allows the browser to send the cookie on cross-site requests while
+    # secure=True (enforced by production flag) keeps it HTTPS-only.
+    # In dev (same origin) we keep samesite=strict for maximum CSRF protection.
+    session_samesite = "none" if settings.production else "strict"
     redirect.set_cookie(
         key="session",
         value=session_token,
         httponly=True,
         secure=settings.production,
-        samesite="strict",  # C-1: strict prevents CSRF on logout and action endpoints
+        samesite=session_samesite,
         max_age=settings.access_token_expire_minutes * 60,
     )
     return redirect
