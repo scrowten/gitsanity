@@ -7,8 +7,6 @@ services:
       # H-7: password sourced from .env, not hardcoded — see .env.example
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: gitsanity
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
