@@ -312,6 +312,7 @@ Full interactive docs at `/docs` (Swagger UI) when running locally.
 
 ## Docs
 
+- [Roadmap](ROADMAP.md)
 - [Product Requirements](docs/prd.md)
 - [Architecture](docs/architecture.md)
 - [Task List](docs/tasks.md)
