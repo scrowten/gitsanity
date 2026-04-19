@@ -23,3 +23,12 @@ export interface User {
   display_name: string | null
   avatar_url: string | null
 }
+
+export interface LanguagePreference {
+  name: string
+  weight: number
+}
+
+export interface Preferences {
+  languages: LanguagePreference[]
+}

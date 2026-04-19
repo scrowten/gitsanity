@@ -12,7 +12,7 @@ from app.security import decrypt_token
 from app.models.recommendation import Recommendation, UserPreference
 from app.models.repository import Repository
 from app.models.user import User
-from app.schemas.recommendation import FeedResponse, RepoCard
+from app.schemas.recommendation import FeedResponse, LanguagePreference, PreferencesResponse, RepoCard
 from app.services.github import GitHubClient, GitHubRepo
 from app.services.preference import UserPreferenceProfile
 from app.services.recommender import score_repos
@@ -79,6 +79,32 @@ async def get_feed(
         page=page,
         has_more=offset + limit < len(scored),
     )
+
+
+@router.get("/preferences", response_model=PreferencesResponse)
+@limiter.limit("30/minute")
+async def get_preferences(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PreferencesResponse:
+    prefs_result = await db.execute(
+        select(UserPreference).where(
+            UserPreference.user_id == current_user.id,
+            UserPreference.preference_type == "language",
+        )
+    )
+    prefs = prefs_result.scalars().all()
+    languages = sorted(
+        [
+            LanguagePreference(name=p.preference_value.title(), weight=round(p.weight, 3))
+            for p in prefs
+            if p.weight > 0.05
+        ],
+        key=lambda x: x.weight,
+        reverse=True,
+    )
+    return PreferencesResponse(languages=languages)
 
 
 @router.post("/{github_id}/action")

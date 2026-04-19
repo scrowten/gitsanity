@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { FeedResponse, RepoCard, User } from '@/types'
+import type { FeedResponse, Preferences, RepoCard, User } from '@/types'
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
@@ -18,6 +18,11 @@ export async function getSaved(): Promise<RepoCard[]> {
 
 export async function repoAction(githubId: number, action: 'saved' | 'dismissed' | 'clicked') {
   await api.post(`/feed/${githubId}/action`, null, { params: { action } })
+}
+
+export async function getPreferences(): Promise<Preferences> {
+  const { data } = await api.get<Preferences>('/feed/preferences')
+  return data
 }
 
 export async function getMe(): Promise<User> {

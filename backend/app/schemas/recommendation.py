@@ -18,3 +18,12 @@ class FeedResponse(BaseModel):
     total: int
     page: int
     has_more: bool
+
+
+class LanguagePreference(BaseModel):
+    name: str
+    weight: float
+
+
+class PreferencesResponse(BaseModel):
+    languages: list[LanguagePreference]
