@@ -29,7 +29,7 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
   const safeUrl = safeGitHubUrl(repo.html_url)
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-[#d0d7de] rounded-md p-5 hover:border-[#0969da] transition-colors">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
         {safeUrl ? (
@@ -37,17 +37,17 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
             href={safeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-1.5 font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+            className="group flex items-center gap-1.5 font-semibold text-[#0969da] hover:underline"
           >
             <span className="truncate">{repo.full_name}</span>
             <ExternalLink className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           </a>
         ) : (
-          <span className="font-semibold text-gray-900 truncate">{repo.full_name}</span>
+          <span className="font-semibold text-[#1f2328] truncate">{repo.full_name}</span>
         )}
 
         {/* Stars */}
-        <div className="flex items-center gap-1 text-sm text-gray-500 shrink-0">
+        <div className="flex items-center gap-1 text-sm text-[#656d76] shrink-0">
           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
           <span>{formatStars(repo.star_count)}</span>
         </div>
@@ -55,7 +55,7 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
 
       {/* Description */}
       {repo.description && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{repo.description}</p>
+        <p className="text-sm text-[#656d76] mb-3 line-clamp-2">{repo.description}</p>
       )}
 
       {/* Tags */}
@@ -66,14 +66,14 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
           </span>
         )}
         {repo.topics.slice(0, 4).map((topic) => (
-          <span key={topic} className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+          <span key={topic} className="text-xs px-2 py-0.5 rounded-full bg-[#ddf4ff] text-[#0969da] font-medium">
             {topic}
           </span>
         ))}
       </div>
 
       {/* Reason */}
-      <p className="text-xs text-indigo-600 mb-4 italic">{repo.reason}</p>
+      <p className="text-xs text-[#656d76] mb-4 italic">{repo.reason}</p>
 
       {/* Actions */}
       {(onSave || onDismiss) && !saved && (
@@ -81,7 +81,7 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
           {onSave && (
             <button
               onClick={() => onSave(repo.github_id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#2da44e] rounded-md hover:bg-[#2c974b] transition-colors"
             >
               <Bookmark className="w-3.5 h-3.5" />
               Save
@@ -90,7 +90,7 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
           {onDismiss && (
             <button
               onClick={() => onDismiss(repo.github_id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#1f2328] bg-[#f6f8fa] border border-[#d0d7de] rounded-md hover:bg-[#eaeef2] transition-colors"
             >
               <X className="w-3.5 h-3.5" />
               Dismiss
@@ -101,14 +101,14 @@ export function RepoCard({ repo, onSave, onDismiss, onUnsave, saved = false }: R
 
       {saved && (
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1 text-xs text-green-700 font-medium">
-            <Bookmark className="w-3.5 h-3.5 fill-green-600 text-green-600" />
+          <span className="inline-flex items-center gap-1 text-xs text-[#2da44e] font-medium">
+            <Bookmark className="w-3.5 h-3.5 fill-[#2da44e] text-[#2da44e]" />
             Saved
           </span>
           {onUnsave && (
             <button
               onClick={() => onUnsave(repo.github_id)}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              className="text-xs text-[#656d76] hover:text-red-600 transition-colors"
             >
               Remove
             </button>

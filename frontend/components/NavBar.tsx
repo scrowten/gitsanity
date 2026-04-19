@@ -22,11 +22,11 @@ export function NavBar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-[#161b22] border-b border-[#30363d]">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-gray-900 hover:text-indigo-600 transition-colors">
-          <Telescope className="w-5 h-5 text-indigo-600" />
+        <Link href="/" className="flex items-center gap-2 font-bold text-white hover:text-[#2da44e] transition-colors">
+          <Telescope className="w-5 h-5 text-[#2da44e]" />
           <span>GitSanity</span>
         </Link>
 
@@ -36,10 +36,10 @@ export function NavBar() {
               <Link
                 href="/feed"
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
                   pathname === '/feed'
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-[#21262d] text-white'
+                    : 'text-[#e6edf3] hover:text-white hover:bg-[#21262d]'
                 )}
               >
                 <Rss className="w-4 h-4 shrink-0" />
@@ -48,10 +48,10 @@ export function NavBar() {
               <Link
                 href="/saved"
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
                   pathname === '/saved'
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-[#21262d] text-white'
+                    : 'text-[#e6edf3] hover:text-white hover:bg-[#21262d]'
                 )}
               >
                 <Bookmark className="w-4 h-4 shrink-0" />
@@ -68,16 +68,16 @@ export function NavBar() {
                   alt={user.display_name ?? user.github_username}
                   width={28}
                   height={28}
-                  className="rounded-full"
+                  className="rounded-full ring-1 ring-[#30363d]"
                 />
               )}
-              <span className="text-sm text-gray-700 hidden sm:block">
+              <span className="text-sm text-[#e6edf3] hidden sm:block">
                 {user.display_name ?? user.github_username}
               </span>
               <button
                 onClick={handleLogout}
                 aria-label="Sign out"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-[#e6edf3] hover:text-white hover:bg-[#21262d] transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:block">Sign out</span>
@@ -86,7 +86,7 @@ export function NavBar() {
           ) : (
             <a
               href={getLoginUrl()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white bg-[#2da44e] hover:bg-[#2c974b] transition-colors"
             >
               <LogIn className="w-4 h-4" />
               Sign in

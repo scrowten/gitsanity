@@ -11,17 +11,19 @@ export function formatStars(count: number): string {
 }
 
 const LANGUAGE_COLORS: Record<string, string> = {
-  python: 'bg-blue-100 text-blue-800',
-  typescript: 'bg-sky-100 text-sky-800',
-  javascript: 'bg-yellow-100 text-yellow-800',
-  rust: 'bg-orange-100 text-orange-800',
-  go: 'bg-cyan-100 text-cyan-800',
-  java: 'bg-red-100 text-red-800',
-  'c++': 'bg-pink-100 text-pink-800',
-  ruby: 'bg-rose-100 text-rose-800',
-  swift: 'bg-orange-100 text-orange-800',
-  kotlin: 'bg-purple-100 text-purple-800',
-  default: 'bg-gray-100 text-gray-700',
+  python: 'bg-[#3572A5]/10 text-[#3572A5]',
+  typescript: 'bg-[#3178c6]/10 text-[#3178c6]',
+  javascript: 'bg-[#f1e05a]/20 text-[#b5a200]',
+  rust: 'bg-[#dea584]/20 text-[#9b4b23]',
+  go: 'bg-[#00ADD8]/10 text-[#007d9c]',
+  java: 'bg-[#b07219]/10 text-[#b07219]',
+  'c++': 'bg-[#f34b7d]/10 text-[#c0185d]',
+  ruby: 'bg-[#701516]/10 text-[#701516]',
+  swift: 'bg-[#F05138]/10 text-[#c23b1e]',
+  kotlin: 'bg-[#A97BFF]/10 text-[#7b4fd4]',
+  shell: 'bg-[#89e051]/10 text-[#3d7a18]',
+  c: 'bg-[#555555]/10 text-[#555555]',
+  default: 'bg-[#eaeef2] text-[#57606a]',
 }
 
 export function languageColor(lang: string | null): string {

@@ -53,7 +53,7 @@ export default function FeedPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#2da44e]" />
       </div>
     )
   }
@@ -91,7 +91,7 @@ export default function FeedPage() {
         {isError && (
           <div className="text-center py-20">
             <p className="text-gray-500 mb-3">Could not load your feed.</p>
-            <button onClick={() => refetch()} className="text-sm text-indigo-600 hover:underline">
+            <button onClick={() => refetch()} className="text-sm text-[#2da44e] hover:underline">
               Try again
             </button>
           </div>
@@ -125,7 +125,7 @@ export default function FeedPage() {
           <div className="mt-8 text-center">
             <button
               onClick={() => setPage((p) => p + 1)}
-              className="px-5 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
+              className="px-5 py-2 text-sm font-medium text-[#0969da] border border-[#d0d7de] rounded-md hover:bg-[#f6f8fa] transition-colors"
             >
               Load more
             </button>
